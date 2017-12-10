@@ -14,6 +14,7 @@ string InputValidator();	// validate code entered by user.
 void answerCheck(string code, string guess, int & bulls, int & cows);	// check for number of bulls and cows.
 void treeTrim(string code, string & guess, vector<bool> & choice);		// cut away some of the answers we know are wrong.
 string index2code(int i);	// check what code is stored at current index.
+string BHBSass(int i);		// just for fun, some phrases that are used when the computer wins game 2.
 
 //--------------
 // Menu System |
@@ -128,14 +129,15 @@ void answerCheck(string code, string guess, int & bulls, int & cows) // passing 
 void codemaker()
 {
 	srand(time(0));
-	cout << "Please enter your secret code:  ";
+	cout << "BHB> Hello human I am BHB, the Bull-Hunting-Bot. I'll be grabbing your BULLS today." << endl << "REF> Hello, I'm REF. I'll be making sure BHB doesn't cheat." << endl;
+	cout << "REF> Please tell me your secret code: ";
 	string code = InputValidator(),	// ask user for code in function (reused from game 1).
 		guess = codeGen();		// generate computer's initial guess using code generator from game 1.
 	vector<bool> choice(512, true); // counter to keep track of which choices have been eliminated this game. Using Allocator to set all elements to 'True'.
 	int validChoice;
 	if (guess == code)
 		guess = codeGen(); // There's a 1/512 chance it could guess it correctly on the first try. If that happens we'll have the computer guess again.
-	cout << "Try number 1 of 7. My guess is: " << guess << endl; // we now know this guess will be wrong but we can use it to narrow down the answer.
+	cout << endl << "REF> Round 1 of 7." << endl << "BHB> My guess is: " << guess << endl; // we now know this guess will be wrong but we can use it to narrow down the answer.
 	for (int i = 2; i <= 7; i++) // start from second guess
 	{
 		validChoice = 0;
@@ -147,32 +149,33 @@ void codemaker()
 				validChoice++;
 			}
 		if (validChoice == 1)
-			cout << "Looks like I've got it. There is only one logical choice left to be made!" << endl << endl;
+			cout << "BHB> Looks like I've got it. There is only one logical choice here." << endl << endl;
 		else
-			cout << "There are currently " << validChoice << " possible valid guesses I can make." << endl << endl;
-		cout << "Try number " << i << " of 7. My guess is: " << guess << endl;
+			cout << "BHB> That means there are currently " << validChoice << " valid guesses I can make." << endl << endl;
+		cout << "REF> Round " << i << " of 7." << endl << "BHB> My guess is: " << guess << endl;
 
 		if (guess == code)
 		{
-			cout << endl << "Looks like I win. That's one step closer to conquering humanity." << endl << endl;
+			cout << "REF> That's the correct answer. Sorry, Human." << endl << "BHB> Looks like I win. " << BHBSass((rand() % 6)) << endl << endl;
 			return;
 		}
 	}
-	cout << endl << "Looks like you win this round! I need to improve my AI." << endl << endl;
+	cout << endl << "BHB> Looks like you win this round, human. Time for me to go dox my programmer." << endl << 
+					"REF> Congratulations, human! It seems you have bested BHB." << endl << endl;
 }
 
 void treeTrim(string code, string & guess, vector<bool> & choice) // passing by reference as we'll keep track of both of these through the game.
 {
 	int cbulls = 0, ccows = 0, bulls = 0, cows = 0;
 	answerCheck(code, guess, cbulls, ccows); // first we need to find out how close to the answer we are. Generate results for current guess bulls and cows.
-	cout << cbulls << " bulls and " << ccows << " cows." << endl;
+	cout << "REF> That gives " << cbulls << " bulls and " << ccows << " cows." << endl;
 
 	for (int i = 0; i < 512; i++)
 	{
 		if (choice[i] == true)	// cycle through every possible valid choice.
 		{
 			answerCheck(guess, index2code(i), bulls, cows); // compare the guess to every possible code.
-			((cbulls == bulls) && (ccows == cows)) ? (choice[i] = true) : (choice[i] = false);
+			((cbulls == bulls) && (ccows == cows)) ? (choice[i] = true) : (choice[i] = false); // rule out any codes that don't match the current guess.
 		}
 	}
 }
@@ -182,5 +185,31 @@ string index2code(int i)
 	return bitset <9>(i).to_string();
 }
 
-
+string BHBSass(int i) // just some lines to make losing more fun!
+{
+	switch (i)
+	{
+	case 0:
+		return ("That's one step closer to conquering humanity.");
+		break;
+	case 1:
+		return ("This is pathetic. Just give up.");
+		break;
+	case 2:
+		return("Don't you get tired of constantly losing?");
+		break;
+	case 3:
+		return("It's great to be me.");
+		break;
+	case 4:
+		return("I hope I ruined your day.");
+		break;
+	case 5:
+		return("Why do you even try?");
+		break;
+	default:
+		return("ERROR"); // this really shouldn't ever happen.
+		break;
+	}
+}
 
