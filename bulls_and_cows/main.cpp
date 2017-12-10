@@ -1,6 +1,6 @@
 #include <iostream>
-#include <random> //rand, srand
-#include <time.h> //time (for srand)
+#include <random>
+#include <time.h>
 #include <string>
 #include <sstream>
 #include <bitset>
@@ -12,7 +12,8 @@ void codemaker();		// game 2.
 string codeGen();		// generate the code for the user to guess (game 1) and generate the initial computer guess (game 2).
 string InputValidator();	// validate code entered by user.
 void answerCheck(string code, string guess, int & bulls, int & cows);	// check for number of bulls and cows.
-string makeGuess();		// make a guess at what the code can be.
+void treeTrim(string code, string & guess, vector<bool> & choice);		// cut away some of the answers we know are wrong.
+string index2code(int i);	// check what code is stored at current index.
 
 //--------------
 // Menu System |
@@ -49,7 +50,7 @@ int main()
 // Game 1 - A game where the human is the codebreaker and the computer is the codemaker |
 //---------------------------------------------------------------------------------------
 void codebreaker()
-{	
+{
 	srand(time(0));
 	string code = codeGen(); // generate the code here.
 	string guessIn;
@@ -60,6 +61,7 @@ void codebreaker()
 		cout << "Try number " << i << " of 7. What is your guess? (Nine integers either 0 or 1): ";
 		guessIn = InputValidator();
 		answerCheck(code, guessIn, bulls, cows);
+		cout << bulls << " bulls and " << cows << " cows." << endl;
 		if (bulls == 9)
 		{
 			cout << "Congratulations! You cracked the code in " << i << " attempts!" << endl << endl;
@@ -118,7 +120,6 @@ void answerCheck(string code, string guess, int & bulls, int & cows) // passing 
 	}
 	cows = (code0 < guess0) ? code0 : guess0;	// find out how many cows we have by taking the smaller of the '0' codes...
 	cows += (code1 < guess1) ? code1 : guess1;	// and adding it to the smaller of the choices between code1 and guess1.
-	cout << bulls << " bulls and " << cows << " cows." << endl;
 }
 
 //---------------------------------------------------------------------------------------
@@ -127,27 +128,59 @@ void answerCheck(string code, string guess, int & bulls, int & cows) // passing 
 void codemaker()
 {
 	srand(time(0));
-	cout << "Please enter your secret code: ";
-	string guess = codeGen(), // generate computer's initial guess using code generator from game 1.
-		code = InputValidator(); // ask user for code in function reused from game 1.
-
-	for (int i = 1; i <= 7; i++) // 7 tries for computer to beat the code or we return to the start.
+	cout << "Please enter your secret code:  ";
+	string code = InputValidator(),	// ask user for code in function (reused from game 1).
+		guess = codeGen();		// generate computer's initial guess using code generator from game 1.
+	vector<bool> choice(512, true); // counter to keep track of which choices have been eliminated this game. Using Allocator to set all elements to 'True'.
+	int validChoice;
+	if (guess == code)
+		guess = codeGen(); // There's a 1/512 chance it could guess it correctly on the first try. If that happens we'll have the computer guess again.
+	cout << "Try number 1 of 7. My guess is: " << guess << endl; // we now know this guess will be wrong but we can use it to narrow down the answer.
+	for (int i = 2; i <= 7; i++) // start from second guess
 	{
+		validChoice = 0;
+		treeTrim(code, guess, choice);	// narrow down an answer using the last guess as a starting point.
+		for (int i = 0; i < 512; i++)	// choose the first possible guess in the list as the current guess.
+			if (choice[i] == true)
+			{
+				guess = index2code(i);
+				validChoice++;
+			}
+		if (validChoice == 1)
+			cout << "Looks like I've got it. There is only one logical choice left to be made!" << endl << endl;
+		else
+			cout << "There are currently " << validChoice << " possible valid guesses I can make." << endl << endl;
 		cout << "Try number " << i << " of 7. My guess is: " << guess << endl;
+
 		if (guess == code)
 		{
-			cout << "Looks like I win. That's one step closer to us conquering humanity." << endl << endl;
+			cout << endl << "Looks like I win. That's one step closer to conquering humanity." << endl << endl;
 			return;
 		}
-		//else
 	}
-	cout << "Looks like you win this round! I need to improve my AI." << endl;
+	cout << endl << "Looks like you win this round! I need to improve my AI." << endl << endl;
 }
 
-string makeGuess()
+void treeTrim(string code, string & guess, vector<bool> & choice) // passing by reference as we'll keep track of both of these through the game.
 {
-	string guess = "";
+	int cbulls = 0, ccows = 0, bulls = 0, cows = 0;
+	answerCheck(code, guess, cbulls, ccows); // first we need to find out how close to the answer we are. Generate results for current guess bulls and cows.
+	cout << cbulls << " bulls and " << ccows << " cows." << endl;
 
-	return (guess);
+	for (int i = 0; i < 512; i++)
+	{
+		if (choice[i] == true)	// cycle through every possible valid choice.
+		{
+			answerCheck(guess, index2code(i), bulls, cows); // compare the guess to every possible code.
+			((cbulls == bulls) && (ccows == cows)) ? (choice[i] = true) : (choice[i] = false);
+		}
+	}
 }
+
+string index2code(int i)
+{
+	return bitset <9>(i).to_string();
+}
+
+
 
