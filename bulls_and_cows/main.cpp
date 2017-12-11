@@ -55,11 +55,10 @@ void codebreaker()
 	srand(time(0));
 	string code = codeGen(); // generate the code here.
 	string guessIn;
-	int bulls = 0, cows = 0;
-	cout << code << endl;
+	int bulls, cows;
 	for (int i = 1; i <= 7; i++) // 7 tries to beat the game or we return to the start.
 	{
-		cout << "Try number " << i << " of 7. What is your guess? (Nine integers either 0 or 1): ";
+		cout << endl << "Try number " << i << " of 7. What is your guess? (Nine integers either 0 or 1): ";
 		guessIn = InputValidator();
 		answerCheck(code, guessIn, bulls, cows);
 		cout << bulls << " bulls and " << cows << " cows." << endl;
@@ -102,26 +101,20 @@ string InputValidator()
 
 void answerCheck(string code, string guess, int & bulls, int & cows) // passing bulls and cows by reference so this function can also be used in game 2.
 {
-	int code0 = 0, code1 = 0, guess0 = 0, guess1 = 0;
-	bulls = 0;
+	int cow0 = 0, cow1 = 0;
+	bulls = 0;						// reset the bulls since we don't need the number to carry over from last play.
 	for (unsigned i = 0; i <= code.length() - 1; ++i)
 	{
 		if (code[i] == guess[i])	// a match means it's a bull.
 			bulls++;
-		else if (code[i] == '0')	// if the code is a '0' and there's no match, increase '0' counter for code and the '1' for guess...
-		{
-			code0++;
-			guess1++;
-		}
-		else						// ...otherwise do the opposite.
-		{
-			code1++;
-			guess0++;
-		}
+		else if (code[i] == '0')	// if the code is a '0' and there's no match, increase '0' counter for cows. In this case, cow0 always represents a '0' in the code and '1' in the guess.
+			cow0++;
+		else						// We'll add one to 'cow1' if 'code' is a 1. (which also means 'guess' is 0.
+			cow1++;
 	}
-	cows = (code0 < guess0) ? code0 : guess0;	// find out how many cows we have by taking the smaller of the '0' codes...
-	cows += (code1 < guess1) ? code1 : guess1;	// and adding it to the smaller of the choices between code1 and guess1.
-}
+	cows = (cow0 < cow1) ? (cow0 * 2) : (cow1 * 2);	// cows are equal to the smaller of the two counters, since the smaller number represents how many '0's are duplicaes in both the code and the guess.
+}			// We can then multiply by 2 since there will always be the same number of duplicate '1's as there are '0's, which saves us working out the same statement in reverse.
+
 
 //---------------------------------------------------------------------------------------
 // Game 2 - A game where the human is the codemaker and the computer is the codebreaker |
@@ -129,20 +122,20 @@ void answerCheck(string code, string guess, int & bulls, int & cows) // passing 
 void codemaker()
 {
 	srand(time(0));
-	cout << "BHB> Hello human I am BHB, the Bull-Hunting-Bot. I'll be grabbing your BULLS today." << endl << "REF> Hello, I'm REF. I'll be making sure BHB doesn't cheat." << endl;
-	cout << "REF> Please tell me your secret code: ";
+	cout << endl << "BHB> Hello human I am BHB, the Bull-Hunting-Bot. I'll be grabbing your BULLS today." << endl << "REF> Hello, I'm REF. I'll be making sure BHB doesn't cheat." << endl;
+	cout << "REF> Please tell me your secret code (Nine integers either 0 or 1): ";
 	string code = InputValidator(),	// ask user for code in function (reused from game 1).
-		guess = codeGen();		// generate computer's initial guess using code generator from game 1.
+		guess = codeGen();		// generate computer's initial guess using random code generator from game 1.
 	vector<bool> choice(512, true); // counter to keep track of which choices have been eliminated this game. Using Allocator to set all elements to 'True'.
 	int validChoice;
-	if (guess == code)
-		guess = codeGen(); // There's a 1/512 chance it could guess it correctly on the first try. If that happens we'll have the computer guess again.
+	while (guess == code) // There's a 1/512 chance the correct code could be randomly generated on the first try. If that happens we'll generate a new one to keep things fun.
+		guess = codeGen();
 	cout << endl << "REF> Round 1 of 7." << endl << "BHB> My guess is: " << guess << endl; // we now know this guess will be wrong but we can use it to narrow down the answer.
 	for (int i = 2; i <= 7; i++) // start from second guess
 	{
 		validChoice = 0;
 		treeTrim(code, guess, choice);	// narrow down an answer using the last guess as a starting point.
-		for (int i = 0; i < 512; i++)	// choose the first possible guess in the list as the current guess.
+		for (int i = 0; i < 512; i++)	// choose the last possible guess in the list as the current guess.
 			if (choice[i] == true)
 			{
 				guess = index2code(i);
@@ -156,18 +149,18 @@ void codemaker()
 
 		if (guess == code)
 		{
-			cout << "REF> That's the correct answer. Sorry, Human." << endl << "BHB> Looks like I win. " << BHBSass((rand() % 6)) << endl << endl;
+			cout << "REF> That's the correct answer. Sorry, Human." << endl << "BHB> Looks like I win. " << BHBSass((rand() % 6)) << endl << endl << endl;
 			return;
 		}
 	}
-	cout << endl << "BHB> Looks like you win this round, human. Time for me to go dox my programmer." << endl << 
-					"REF> Congratulations, human! It seems you have bested BHB." << endl << endl;
+	cout << endl << "BHB> Looks like you win this round, human. Time for me to go post bad things about my programmer on Facebook." << endl <<
+		"REF> Congratulations, human! It seems you have bested BHB." << endl << endl;
 }
 
 void treeTrim(string code, string & guess, vector<bool> & choice) // passing by reference as we'll keep track of both of these through the game.
 {
 	int cbulls = 0, ccows = 0, bulls = 0, cows = 0;
-	answerCheck(code, guess, cbulls, ccows); // first we need to find out how close to the answer we are. Generate results for current guess bulls and cows.
+	answerCheck(code, guess, cbulls, ccows); // first we need to find out how close to the answer we are. Generate results for current guess' bulls and cows.
 	cout << "REF> That gives " << cbulls << " bulls and " << ccows << " cows." << endl;
 
 	for (int i = 0; i < 512; i++)
@@ -208,7 +201,7 @@ string BHBSass(int i) // just some lines to make losing more fun!
 		return("Why do you even try?");
 		break;
 	default:
-		return("ERROR"); // this really shouldn't ever happen.
+		return(""); // this REALLY shouldn't ever happen.
 		break;
 	}
 }
