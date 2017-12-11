@@ -30,7 +30,7 @@ int main()
 			<< "Enter anything else to quit." << endl << endl
 			<< "Your Choice: ";
 		cin >> game;
-		cin.ignore(256, '\n'); // for some reason the return was being held in memory and was getting input as soon as getline was called. This fixes that.
+		cin.ignore(256, '\n'); // for some reason the return was being held in memory and was getting input as soon as getline was called (line 90). This fixes that.
 		cout << endl;
 		switch (game)
 		{
